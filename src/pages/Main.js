@@ -1,20 +1,11 @@
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Image,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity
-} from "react-native";
-import MapView, { Marker, Callout } from "react-native-maps";
-import {
-  requestPermissionsAsync,
-  getCurrentPositionAsync
-} from "expo-location";
+import { StyleSheet, View, TextInput, TouchableOpacity } from "react-native";
+import MapView from "react-native-maps";
+import { requestPermissionsAsync, getCurrentPositionAsync} from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import api from "../services/api";
+import { connect, disconnect, subscribeToNewDevs } from "../services/socket";
 import DevMarker from "../components/DevMarker";
 
 function Main({ navigation }) {
@@ -44,6 +35,16 @@ function Main({ navigation }) {
     loadInitialPosition();
   }, []);
 
+  useEffect(() => {
+    subscribeToNewDevs(dev => setDevs([ ...devs, dev ]));
+  }, [devs]);
+
+  function setupWebSockect() {
+    disconnect();
+    const { latitude, longitude } = currentRegion;
+    connect(latitude, longitude, techs);
+  }
+
   async function loadDevs() {
     const { latitude, longitude } = currentRegion;
 
@@ -56,6 +57,7 @@ function Main({ navigation }) {
     });
 
     setDevs(response.data.devs);
+    setupWebSockect();
   }
 
   function handerFunctionChanged(region) {
